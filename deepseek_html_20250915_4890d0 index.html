@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>围术期低体温风险评估工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/css">
+        body {
+            font-family: 'Noto Sans SC', system-ui, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .risk-indicator {
+            transition: all 0.3s ease;
+        }
+        .print-only {
+            display: none;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .print-only {
+                display: block;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white dark:bg-gray-800 shadow-sm py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-blue-500 rounded-lg w-10 h-10 flex items-center justify-center">
+                    <i class="fas fa-temperature-low text-white"></i>
+                </div>
+                <span class="text-xl font-semibold">围术期体温管理</span>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button id="themeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- 标题区域 -->
+        <div class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">围术期低体温风险评估工具</h1>
+            <p class="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto text-lg">
+                基于最新临床指南的专业评估工具，帮助医护人员准确评估患者围术期低体温风险并提供针对性管理建议
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- 患者信息卡片 -->
+            <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-user-circle mr-3 text-blue-500"></i>患者基本信息
+                </h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">患者姓名</label>
+                        <input type="text" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入患者姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">病历号</label>
+                        <input type="text" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入病历号">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">手术日期</label>
+                        <input type="date" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">评估者</label>
+                        <input type="text" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入评估者姓名">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 风险指示器 -->
+            <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3 text-blue-500"></i>风险评估结果
+                </h2>
+                
+                <div class="flex flex-col items-center justify-center h-64">
+                    <div class="text-5xl font-bold mb-2 risk-indicator" id="totalScore">14</div>
+                    <div class="text-2xl font-semibold mb-4 risk-indicator" id="riskLevel">高风险</div>
+                    
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-6">
+                        <div class="bg-red-500 h-4 rounded-full" style="width: 85%"></div>
+                    </div>
+                    
+                    <div class="text-center px-4">
+                        <p class="text-gray-600 dark:text-gray-400">
+                            根据评估，该患者属于<strong class="text-red-500">高风险</strong>人群，建议采取综合保温措施
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 风险评估卡片 -->
+        <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-8">
+            <h2 class="text-xl font-semibold mb-6 flex items-center">
+                <i class="fas fa-clipboard-list mr-3 text-blue-500"></i>风险因素评估
+            </h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-100 dark:bg-gray-700">
+                            <th class="text-left p-4 font-medium">风险因素</th>
+                            <th class="text-left p-4 font-medium">评分标准与选项</th>
+                            <th class="text-center p-4 font-medium w-24">得分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">1. 年龄</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="0">&lt; 40 岁 (0分)</option>
+                                    <option value="1">40 - 59 岁 (1分)</option>
+                                    <option value="2" selected>≥ 60 岁 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">2</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">2. 术前核心体温</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="0">≥ 36.5°C (0分)</option>
+                                    <option value="1">36.0 - 36.4°C (1分)</option>
+                                    <option value="2" selected>&lt; 36.0°C (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">2</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">3. 美国麻醉师协会(ASA)分级</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="0">I 级 (0分)</option>
+                                    <option value="1">II 级 (1分)</option>
+                                    <option value="2" selected>≥ III 级 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">2</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">4. 预计手术时长</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="1">&lt; 60 分钟 (1分)</option>
+                                    <option value="2">60 - 119 分钟 (2分)</option>
+                                    <option value="3" selected>≥ 120 分钟 (3分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">3</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">5. 手术类型/范围</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="1">微创/表浅手术 (1分)</option>
+                                    <option value="2">中型/腹腔镜手术 (2分)</option>
+                                    <option value="3" selected>大型开放手术/胸腹腔大开手术 (3分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">3</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-750">
+                            <td class="p-4 font-medium">6. 合并特殊情况</td>
+                            <td class="p-4">
+                                <select class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="0">无上述情况 (0分)</option>
+                                    <option value="1">低体重 (BMI < 18.5) (1分)</option>
+                                    <option value="1">严重创伤/烧伤 (1分)</option>
+                                    <option value="1">甲状腺功能减退 (1分)</option>
+                                    <option value="2" selected>大量出血或液体转移预期 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center font-bold text-lg">2</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 管理建议卡片 -->
+        <div class="card bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mt-8">
+            <h2 class="text-xl font-semibold mb-6 flex items-center">
+                <i class="fas fa-lightbulb mr-3 text-blue-500"></i>术中体温管理建议
+            </h2>
+            
+            <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-6 rounded-r-lg">
+                <h3 class="font-semibold text-red-800 dark:text-red-300 text-lg mb-3">高风险 (≥7分) 管理策略</h3>
+                <p class="text-red-700 dark:text-red-300 mb-4">在中风险措施基础上，增加以下强化措施：</p>
+                <ul class="space-y-2 text-red-700 dark:text-red-300">
+                    <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-3 text-red-500"></i> <span><strong>强化主动保温</strong>：使用<strong>全身型（上下半身）</strong>强制空气升温毯。</span></li>
+                    <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-3 text-red-500"></i> <span><strong>精准监测</strong>：考虑使用更精确的核心体温监测（如食道、鼻咽探头）。</span></li>
+                    <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-3 text-red-500"></i> <span><strong>全方位加温</strong>：确保所有静脉液体、血制品、冲洗液均经过加温。</span></li>
+                </ul>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-300">中风险 (4-6分)</h4>
+                    <p class="text-blue-700 dark:text-blue-300 text-sm mt-1">在低风险措施基础上，增加主动保温措施</p>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 rounded-r-lg">
+                    <h4 class="font-semibold text-green-800 dark:text-green-300">低风险 (1-3分)</h4>
+                    <p class="text-green-700 dark:text-green-300 text-sm mt-1">常规环境预热、被动保温和液体加温措施</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="flex flex-wrap gap-4 justify-center mt-12 no-print">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors shadow-md">
+                <i class="fas fa-file-word mr-2"></i> 下载Word文档
+            </button>
+            <button class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors shadow-md">
+                <i class="fas fa-file-excel mr-2"></i> 下载Excel表格
+            </button>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors shadow-md">
+                <i class="fas fa-print mr-2"></i> 打印评估表
+            </button>
+            <button class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors shadow-md">
+                <i class="fas fa-redo mr-2"></i> 重置表单
+            </button>
+        </div>
+
+        <!-- 免责声明 -->
+        <div class="text-sm text-gray-500 dark:text-gray-400 text-center max-w-3xl mx-auto mt-8">
+            <p>免责声明：本评分表为临床辅助工具，旨在提高对围术期低体温风险的警惕性并提供预防性建议。最终的临床决策需由主治医生结合患者具体情况进行判断。</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-16 py-8">
+        <div class="container mx-auto px-4">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="mb-4 md:mb-0">
+                    <h4 class="text-lg font-semibold mb-2">作者信息</h4>
+                    <p class="text-gray-600 dark:text-gray-400">医疗信息团队</p>
+                </div>
+                
+                <div class="mb-4 md:mb-0">
+                    <h4 class="text-lg font-semibold mb-2">社交媒体</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-600 hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400 transition-colors">
+                            <i class="fab fa-weibo text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-2">版权信息</h4>
+                    <p class="text-gray-600 dark:text-gray-400">© 2023 围术期体温管理工具. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 主题切换功能
+        const themeToggle = document.getElementById('themeToggle');
+        
+        // 检查本地存储或系统偏好
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // 切换主题
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+
+        // 简单的交互效果
+        document.querySelectorAll('select').forEach(select => {
+            select.addEventListener('change', function() {
+                // 这里可以添加计算分数的逻辑
+                console.log('选项已更改:', this.value);
+            });
+        });
+    </script>
+</body>
+</html>
