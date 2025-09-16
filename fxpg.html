@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>围术期低体温风险评估工具</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入xlsx和FileSaver库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        secondary: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- 引入Google字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style type="text/css">
+        body {
+            font-family: 'Noto Sans SC', system-ui, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .risk-indicator {
+            transition: all 0.3s ease;
+        }
+        .print-only {
+            display: none;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .print-only {
+                display: block;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-secondary-900 text-secondary-800 dark:text-secondary-200 transition-colors duration-300">
+    <!-- 顶部导航栏 -->
+    <header class="sticky top-0 z-10 bg-white/80 dark:bg-secondary-900/80 backdrop-blur-sm border-b border-secondary-200 dark:border-secondary-700">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="bg-primary-500 rounded-lg w-8 h-8 flex items-center justify-center">
+                        <i class="fas fa-temperature-low text-white"></i>
+                    </div>
+                    <h1 class="text-xl font-semibold">围术期体温管理</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- 主题切换按钮 -->
+                    <button id="themeToggle" class="p-2 rounded-lg bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 标题区域 -->
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-bold mb-2">围术期低体温风险评估工具</h2>
+            <p class="text-secondary-600 dark:text-secondary-400 max-w-3xl mx-auto">
+                基于最新临床指南的专业评估工具，帮助医护人员准确评估患者围术期低体温风险并提供针对性管理建议
+            </p>
+        </div>
+
+        <!-- 患者信息卡片 -->
+        <div class="bg-white dark:bg-secondary-800 rounded-xl shadow-sm p-6 mb-8 border border-secondary-200 dark:border-secondary-700">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-user-circle mr-2 text-primary-500"></i>患者基本信息
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">患者姓名</label>
+                    <input type="text" id="patientName" class="w-full px-4 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">病历号</label>
+                    <input type="text" id="patientID" class="w-full px-4 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">手术日期</label>
+                    <input type="date" id="surgeryDate" class="w-full px-4 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">评估者</label>
+                    <input type="text" id="assessor" class="w-full px-4 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <!-- 风险评估卡片 -->
+        <div class="bg-white dark:bg-secondary-800 rounded-xl shadow-sm p-6 mb-8 border border-secondary-200 dark:border-secondary-700">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-clipboard-list mr-2 text-primary-500"></i>风险因素评估
+            </h3>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-secondary-100 dark:bg-secondary-700">
+                            <th class="text-left p-3 font-medium">风险因素</th>
+                            <th class="text-left p-3 font-medium">评分标准与选项</th>
+                            <th class="text-center p-3 font-medium w-24">得分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">1. 年龄</td>
+                            <td class="p-3">
+                                <select id="age" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="0">&lt; 40 岁 (0分)</option>
+                                    <option value="1">40 - 59 岁 (1分)</option>
+                                    <option value="2" selected>≥ 60 岁 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="ageScore">2</td>
+                        </tr>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">2. 术前核心体温</td>
+                            <td class="p-3">
+                                <select id="temperature" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="0">≥ 36.5°C (0分)</option>
+                                    <option value="1">36.0 - 36.4°C (1分)</option>
+                                    <option value="2" selected>&lt; 36.0°C (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="tempScore">2</td>
+                        </tr>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">3. 美国麻醉师协会(ASA)分级</td>
+                            <td class="p-3">
+                                <select id="asa" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="0">I 级 (0分)</option>
+                                    <option value="1">II 级 (1分)</option>
+                                    <option value="2" selected>≥ III 级 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="asaScore">2</td>
+                        </tr>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">4. 预计手术时长</td>
+                            <td class="p-3">
+                                <select id="surgeryDuration" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="1">&lt; 60 分钟 (1分)</option>
+                                    <option value="2">60 - 119 分钟 (2分)</option>
+                                    <option value="3" selected>≥ 120 分钟 (3分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="durationScore">3</td>
+                        </tr>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">5. 手术类型/范围</td>
+                            <td class="p-3">
+                                <select id="surgeryType" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="1">微创/表浅手术 (1分)</option>
+                                    <option value="2">中型/腹腔镜手术 (2分)</option>
+                                    <option value="3" selected>大型开放手术/胸腹腔大开手术 (3分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="typeScore">3</td>
+                        </tr>
+                        <tr class="border-b border-secondary-200 dark:border-secondary-700 hover:bg-secondary-50 dark:hover:bg-secondary-750">
+                            <td class="p-3 font-medium">6. 合并特殊情况</td>
+                            <td class="p-3">
+                                <select id="specialCase" onchange="calculateScore()" class="w-full px-3 py-2 rounded-lg border border-secondary-300 dark:border-secondary-600 bg-white dark:bg-secondary-700 focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                    <option value="0">无上述情况 (0分)</option>
+                                    <option value="1">低体重 (BMI < 18.5) (1分)</option>
+                                    <option value="1">严重创伤/烧伤 (1分)</option>
+                                    <option value="1">甲状腺功能减退 (1分)</option>
+                                    <option value="2" selected>大量出血或液体转移预期 (2分)</option>
+                                </select>
+                            </td>
+                            <td class="p-3 text-center font-bold text-lg" id="caseScore">2</td>
+                        </tr>
+                        <tr class="bg-secondary-50 dark:bg-secondary-750 font-semibold">
+                            <td class="p-3 text-right" colspan="2">总分</td>
+                            <td class="p-3 text-center text-xl bg-amber-100 dark:bg-amber-900/30" id="totalScore">14</td>
+                        </tr>
+                        <tr class="font-semibold">
+                            <td class="p-3 text-right" colspan="2">风险等级</td>
+                            <td class="p-3 text-center text-xl risk-indicator" id="riskLevel">高风险 (≥7分)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 管理建议卡片 -->
+        <div class="bg-white dark:bg-secondary-800 rounded-xl shadow-sm p-6 mb-8 border border-secondary-200 dark:border-secondary-700">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-lightbulb mr-2 text-primary-500"></i>基于风险分级的术中体温管理建议
+            </h3>
+            
+            <div id="lowRiskRec" class="hidden">
+                <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 rounded-r-lg mb-4">
+                    <h4 class="font-semibold text-green-800 dark:text-green-300">低风险 (1-3分)</h4>
+                    <ul class="mt-2 space-y-1 text-green-700 dark:text-green-300">
+                        <li class="flex items-start"><i class="fas fa-check-circle mt-1 mr-2 text-green-500"></i> <span><strong>环境预热</strong>：维持室温 >21°C。</span></li>
+                        <li class="flex items-start"><i class="fas fa-check-circle mt-1 mr-2 text-green-500"></i> <span><strong>被动保温</strong>：使用棉毯、手术巾覆盖非手术区域。</span></li>
+                        <li class="flex items-start"><i class="fas fa-check-circle mt-1 mr-2 text-green-500"></i> <span><strong>液体加温</strong>：对于输注 >500mL 的液体/血液时加温。</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="mediumRiskRec" class="hidden">
+                <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-r-lg mb-4">
+                    <h4 class="font-semibold text-amber-800 dark:text-amber-300">中风险 (4-6分)</h4>
+                    <p class="text-amber-700 dark:text-amber-300 mt-1">在低风险措施基础上，增加：</p>
+                    <ul class="mt-2 space-y-1 text-amber-700 dark:text-amber-300">
+                        <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-2 text-amber-500"></i> <span><strong>主动保温</strong>：对<strong>上半身</strong>使用<strong>强制空气升温系统</strong>。</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="highRiskRec">
+                <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded-r-lg">
+                    <h4 class="font-semibold text-red-800 dark:text-red-300">高风险 (≥7分)</h4>
+                    <p class="text-red-700 dark:text-red-300 mt-1">在中风险措施基础上，增加：</p>
+                    <ul class="mt-2 space-y-1 text-red-700 dark:text-red-300">
+                        <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-2 text-red-500"></i> <span><strong>强化主动保温</strong>：使用<strong>全身型（上下半身）</strong>强制空气升温毯。</span></li>
+                        <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-2 text-red-500"></i> <span><strong>精准监测</strong>：考虑使用更精确的核心体温监测（如食道、鼻咽探头）。</span></li>
+                        <li class="flex items-start"><i class="fas fa-arrow-right mt-1 mr-2 text-red-500"></i> <span><strong>全方位加温</strong>：确保所有静脉液体、血制品、冲洗液均经过加温。</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="flex flex-wrap gap-4 justify-center mb-12 no-print">
+            <button onclick="exportToWord()" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors">
+                <i class="fas fa-file-word mr-2"></i> 下载Word文档
+            </button>
+            <button onclick="exportToExcel()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors">
+                <i class="fas fa-file-excel mr-2"></i> 下载Excel表格
+            </button>
+            <button onclick="window.print()" class="bg-secondary-500 hover:bg-secondary-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors">
+                <i class="fas fa-print mr-2"></i> 打印评估表
+            </button>
+            <button onclick="resetForm()" class="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-lg flex items-center transition-colors">
+                <i class="fas fa-redo mr-2"></i> 重置表单
+            </button>
+        </div>
+
+        <!-- 免责声明 -->
+        <div class="text-sm text-secondary-500 dark:text-secondary-400 text-center max-w-3xl mx-auto mb-8">
+            <p>免责声明：本评分表为临床辅助工具，旨在提高对围术期低体温风险的警惕性并提供预防性建议。最终的临床决策需由主治医生结合患者具体情况进行判断。</p>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-secondary-100 dark:bg-secondary-800 border-t border-secondary-200 dark:border-secondary-700 py-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="mb-4 md:mb-0">
+                    <h4 class="text-lg font-semibold mb-2">作者信息</h4>
+                    <p class="text-secondary-600 dark:text-secondary-400">作者姓名：医疗信息团队</p>
+                </div>
+                
+                <div class="mb-4 md:mb-0">
+                    <h4 class="text-lg font-semibold mb-2">社交媒体</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-secondary-600 hover:text-primary-500 dark:text-secondary-400 dark:hover:text-primary-400 transition-colors">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-secondary-600 hover:text-primary-500 dark:text-secondary-400 dark:hover:text-primary-400 transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-secondary-600 hover:text-primary-500 dark:text-secondary-400 dark:hover:text-primary-400 transition-colors">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-secondary-600 hover:text-primary-500 dark:text-secondary-400 dark:hover:text-primary-400 transition-colors">
+                            <i class="fab fa-weibo text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-2">版权信息</h4>
+                    <p class="text-secondary-600 dark:text-secondary-400">© 2023 围术期体温管理工具. 保留所有权利.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 主题切换功能
+        const themeToggle = document.getElementById('themeToggle');
+        
+        // 检查本地存储或系统偏好
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        // 切换主题
+        themeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+
+        // 计算总分和风险等级
+        function calculateScore() {
+            const ageScore = parseInt(document.getElementById('age').value);
+            const tempScore = parseInt(document.getElementById('temperature').value);
+            const asaScore = parseInt(document.getElementById('asa').value);
+            const durationScore = parseInt(document.getElementById('surgeryDuration').value);
+            const typeScore = parseInt(document.getElementById('surgeryType').value);
+            const caseScore = parseInt(document.getElementById('specialCase').value);
+            
+            // 更新单项得分显示
+            document.getElementById('ageScore').textContent = ageScore;
+            document.getElementById('tempScore').textContent = tempScore;
+            document.getElementById('asaScore').textContent = asaScore;
+            document.getElementById('durationScore').textContent = durationScore;
+            document.getElementById('typeScore').textContent = typeScore;
+            document.getElementById('caseScore').textContent = caseScore;
+            
+            // 计算总分
+            const totalScore = ageScore + tempScore + asaScore + durationScore + typeScore + caseScore;
+            document.getElementById('totalScore').textContent = totalScore;
+            
+            // 确定风险等级
+            const riskLevelCell = document.getElementById('riskLevel');
+            const lowRiskRec = document.getElementById('lowRiskRec');
+            const mediumRiskRec = document.getElementById('mediumRiskRec');
+            const highRiskRec = document.getElementById('highRiskRec');
+            
+            // 隐藏所有建议
+            lowRiskRec.classList.add('hidden');
+            mediumRiskRec.classList.add('hidden');
+            highRiskRec.classList.add('hidden');
+            
+            if (totalScore <= 3) {
+                riskLevelCell.textContent = "低风险 (1-3分)";
+                riskLevelCell.className = "p-3 text-center text-xl risk-indicator bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
+                lowRiskRec.classList.remove('hidden');
+            } else if (totalScore <= 6) {
+                riskLevelCell.textContent = "中风险 (4-6分)";
+                riskLevelCell.className = "p-3 text-center text-xl risk-indicator bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300";
+                mediumRiskRec.classList.remove('hidden');
+            } else {
+                riskLevelCell.textContent = "高风险 (≥7分)";
+                riskLevelCell.className = "p-3 text-center text-xl risk-indicator bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
+                highRiskRec.classList.remove('hidden');
+            }
+        }
+        
+        // 导出为Word文档
+        function exportToWord() {
+            const patientName = document.getElementById('patientName').value || "未提供";
+            const patientID = document.getElementById('patientID').value || "未提供";
+            const surgeryDate = document.getElementById('surgeryDate').value || "未提供";
+            const assessor = document.getElementById('assessor').value || "未提供";
+            const totalScore = document.getElementById('totalScore').textContent;
+            const riskLevel = document.getElementById('riskLevel').textContent;
+            
+            // 获取选项文本而非值
+            const ageText = document.getElementById('age').options[document.getElementById('age').selectedIndex].text;
+            const tempText = document.getElementById('temperature').options[document.getElementById('temperature').selectedIndex].text;
+            const asaText = document.getElementById('asa').options[document.getElementById('asa').selectedIndex].text;
+            const durationText = document.getElementById('surgeryDuration').options[document.getElementById('surgeryDuration').selectedIndex].text;
+            const typeText = document.getElementById('surgeryType').options[document.getElementById('surgeryType').selectedIndex].text;
+            const caseText = document.getElementById('specialCase').options[document.getElementById('specialCase').selectedIndex].text;
+            
+            // 创建Word文档内容
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>围术期低体温风险评分表</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 2cm; }
+                        h1 { color: #2c3e50; text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; }
+                        th { background-color: #3498db; color: white; }
+                        .total-score { font-weight: bold; background-color: #f1c40f; }
+                        .risk-level { font-weight: bold; text-align: center; }
+                        .high-risk { background-color: #e74c3c; color: white; }
+                        .medium-risk { background-color: #f39c12; color: white; }
+                        .low-risk { background-color: #2ecc71; color: white; }
+                        @media print {
+                            body { margin: 1cm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>围术期低体温风险评分表</h1>
+                    <p><strong>患者姓名：</strong>${patientName}</p>
+                    <p><strong>病历号：</strong>${patientID}</p>
+                    <p><strong>手术日期：</strong>${surgeryDate}</p>
+                    <p><strong>评估者：</strong>${assessor}</p>
+                    
+                    <table>
+                        <tr>
+                            <th>风险因素</th>
+                            <th>选项</th>
+                            <th>得分</th>
+                        </tr>
+                        <tr>
+                            <td>1. 年龄</td>
+                            <td>${ageText}</td>
+                            <td>${document.getElementById('ageScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td>2. 术前核心体温</td>
+                            <td>${tempText}</td>
+                            <td>${document.getElementById('tempScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td>3. 美国麻醉师协会(ASA)分级</td>
+                            <td>${asaText}</td>
+                            <td>${document.getElementById('asaScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td>4. 预计手术时长</td>
+                            <td>${durationText}</td>
+                            <td>${document.getElementById('durationScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td>5. 手术类型/范围</td>
+                            <td>${typeText}</td>
+                            <td>${document.getElementById('typeScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td>6. 合并特殊情况</td>
+                            <td>${caseText}</td>
+                            <td>${document.getElementById('caseScore').textContent}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>总分</strong></td>
+                            <td class="total-score">${totalScore}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"><strong>风险等级</strong></td>
+                            <td class="risk-level ${document.getElementById('riskLevel').className}">${riskLevel}</td>
+                        </tr>
+                    </table>
+                    
+                    <h2>基于风险分级的术中体温管理建议</h2>
+                    <div>
+                        ${document.querySelector('.recommendations').innerHTML}
+                    </div>
+                    
+                    <p><em>免责声明：本评分表为临床辅助工具，旨在提高对围术期低体温风险的警惕性并提供预防性建议。最终的临床决策需由主治医生结合患者具体情况进行判断。</em></p>
+                </body>
+                </html>
+            `;
+            
+            // 创建Blob对象并下载
+            const blob = new Blob([htmlContent], { type: 'application/msword' });
+            saveAs(blob, `围术期低体温风险评分表_${patientName}.doc`);
+        }
+        
+        // 导出为Excel表格
+        function exportToExcel() {
+            const patientName = document.getElementById('patientName').value || "未提供";
+            const patientID = document.getElementById('patientID').value || "未提供";
+            const surgeryDate = document.getElementById('surgeryDate').value || "未提供";
+            const assessor = document.getElementById('assessor').value || "未提供";
+            
+            // 获取选项文本
+            const ageText = document.getElementById('age').options[document.getElementById('age').selectedIndex].text;
+            const tempText = document.getElementById('temperature').options[document.getElementById('temperature').selectedIndex].text;
+            const asaText = document.getElementById('asa').options[document.getElementById('asa').selectedIndex].text;
+            const durationText = document.getElementById('surgeryDuration').options[document.getElementById('surgeryDuration').selectedIndex].text;
+            const typeText = document.getElementById('surgeryType').options[document.getElementById('surgeryType').selectedIndex].text;
+            const caseText = document.getElementById('specialCase').options[document.getElementById('specialCase').selectedIndex].text;
+            
+            // 创建工作簿和工作表
+            const wb = XLSX.utils.book_new();
+            
+            // 患者信息数据
+            const patientData = [
+                ["围术期低体温风险评分表"],
+                [""],
+                ["患者信息", ""],
+                ["患者姓名", patientName],
+                ["病历号", patientID],
+                ["手术日期", surgeryDate],
+                ["评估者", assessor],
+                [""],
+            ];
+            
+            // 评分表数据
+            const riskData = [
+                ["风险因素", "选项", "得分"],
+                ["1. 年龄", ageText, document.getElementById('ageScore').textContent],
+                ["2. 术前核心体温", tempText, document.getElementById('tempScore').textContent],
+                ["3. 美国麻醉师协会(ASA)分级", asaText, document.getElementById('asaScore').textContent],
+                ["4. 预计手术时长", durationText, document.getElementById('durationScore').textContent],
+                ["5. 手术类型/范围", typeText, document.getElementById('typeScore').textContent],
+                ["6. 合并特殊情况", caseText, document.getElementById('caseScore').textContent],
+                ["总分", "", document.getElementById('totalScore').textContent],
+                ["风险等级", "", document.getElementById('riskLevel').textContent],
+                [""],
+            ];
+            
+            // 管理建议数据
+            const recommendationData = [
+                ["基于风险分级的术中体温管理建议"],
+                [""],
+                [document.querySelector('.recommendations').textContent.replace(/\n/g, ' ')],
+                [""],
+                ["免责声明：本评分表为临床辅助工具，旨在提高对围术期低体温风险的警惕性并提供预防性建议。最终的临床决策需由主治医生结合患者具体情况进行判断。"]
+            ];
+            
+            // 合并所有数据
+            const allData = [...patientData, ...riskData, ...recommendationData];
+            
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            
+            // 将工作表添加到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, "风险评估");
+            
+            // 生成Excel文件并下载
+            XLSX.writeFile(wb, `围术期低体温风险评分表_${patientName}.xlsx`);
+        }
+        
+        // 重置表单
+        function resetForm() {
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientID').value = '';
+            document.getElementById('surgeryDate').value = '';
+            document.getElementById('assessor').value = '';
+            
+            // 重置所有选择框到默认值
+            document.getElementById('age').selectedIndex = 2;
+            document.getElementById('temperature').selectedIndex = 2;
+            document.getElementById('asa').selectedIndex = 2;
+            document.getElementById('surgeryDuration').selectedIndex = 2;
+            document.getElementById('surgeryType').selectedIndex = 2;
+            document.getElementById('specialCase').selectedIndex = 4;
+            
+            // 重新计算分数
+            calculateScore();
+        }
+        
+        // 初始化页面时计算一次分数
+        window.onload = calculateScore;
+    </script>
+</body>
+</html>
