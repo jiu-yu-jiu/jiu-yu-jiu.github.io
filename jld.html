@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>术中体温监测记录单</title>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.0/docx.js"></script>
+    <style>
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .patient-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .patient-info div {
+            display: flex;
+            align-items: center;
+        }
+        .patient-info label {
+            font-weight: bold;
+            margin-right: 5px;
+            min-width: 70px;
+        }
+        .patient-info input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .add-row-btn {
+            background-color: #2ecc71;
+            margin-bottom: 10px;
+        }
+        .add-row-btn:hover {
+            background-color: #27ae60;
+        }
+        .delete-btn {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+        }
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <h1>术中体温监测记录单</h1>
+    
+    <div class="patient-info">
+        <div>
+            <label for="patientId">病历号:</label>
+            <input type="text" id="patientId">
+        </div>
+        <div>
+            <label for="patientName">患者姓名:</label>
+            <input type="text" id="patientName">
+        </div>
+        <div>
+            <label for="patientGender">性别:</label>
+            <input type="text" id="patientGender">
+        </div>
+        <div>
+            <label for="patientAge">年龄:</label>
+            <input type="text" id="patientAge">
+        </div>
+        <div>
+            <label for="surgeryDate">手术日期:</label>
+            <input type="date" id="surgeryDate">
+        </div>
+        <div>
+            <label for="surgeryName">手术名称:</label>
+            <input type="text" id="surgeryName">
+        </div>
+        <div>
+            <label for="department">科室:</label>
+            <input type="text" id="department">
+        </div>
+        <div>
+            <label for="surgeon">手术医师:</label>
+            <input type="text" id="surgeon">
+        </div>
+        <div>
+            <label for="anesthesiologist">麻醉医师:</label>
+            <input type="text" id="anesthesiologist">
+        </div>
+    </div>
+    
+    <button class="add-row-btn" onclick="addRow()">添加记录行</button>
+    
+    <table id="monitoringTable">
+        <thead>
+            <tr>
+                <th>时间点</th>
+                <th>核心体温(℃)</th>
+                <th>保温措施</th>
+                <th>液体输注量(ml)</th>
+                <th>输液温度(℃)</th>
+                <th>室温(℃)</th>
+                <th>湿度(%)</th>
+                <th>记录人</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="time" value="08:00"></td>
+                <td><input type="number" step="0.1" min="32" max="42"></td>
+                <td>
+                    <select>
+                        <option value="">--选择--</option>
+                        <option value="保温毯">保温毯</option>
+                        <option value="暖风机">暖风机</option>
+                        <option value="输液加温">输液加温</option>
+                        <option value="提高室温">提高室温</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </td>
+                <td><input type="number" min="0"></td>
+                <td><input type="number" step="0.1" min="20" max="40"></td>
+                <td><input type="number" step="0.1" min="18" max="30"></td>
+                <td><input type="number" step="0.1" min="30" max="80"></td>
+                <td><input type="text"></td>
+                <td><button class="delete-btn" onclick="deleteRow(this)">删除</button></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="btn-container">
+        <button onclick="exportToExcel()">导出为Excel</button>
+        <button onclick="exportToWord()">导出为Word</button>
+    </div>
+
+    <script>
+        // 添加新行
+        function addRow() {
+            const tbody = document.querySelector('#monitoringTable tbody');
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td><input type="time"></td>
+                <td><input type="number" step="0.1" min="32" max="42"></td>
+                <td>
+                    <select>
+                        <option value="">--选择--</option>
+                        <option value="保温毯">保温毯</option>
+                        <option value="暖风机">暖风机</option>
+                        <option value="输液加温">输液加温</option>
+                        <option value="提高室温">提高室温</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </td>
+                <td><input type="number" min="0"></td>
+                <td><input type="number" step="0.1" min="20" max="40"></td>
+                <td><input type="number" step="0.1" min="18" max="30"></td>
+                <td><input type="number" step="0.1" min="30" max="80"></td>
+                <td><input type="text"></td>
+                <td><button class="delete-btn" onclick="deleteRow(this)">删除</button></td>
+            `;
+            
+            tbody.appendChild(newRow);
+        }
+        
+        // 删除行
+        function deleteRow(button) {
+            const row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+        }
+        
+        // 导出为Excel
+        function exportToExcel() {
+            // 获取患者信息
+            const patientInfo = {
+                '病历号': document.getElementById('patientId').value,
+                '患者姓名': document.getElementById('patientName').value,
+                '性别': document.getElementById('patientGender').value,
+                '年龄': document.getElementById('patientAge').value,
+                '手术日期': document.getElementById('surgeryDate').value,
+                '手术名称': document.getElementById('surgeryName').value,
+                '科室': document.getElementById('department').value,
+                '手术医师': document.getElementById('surgeon').value,
+                '麻醉医师': document.getElementById('anesthesiologist').value
+            };
+            
+            // 获取表格数据
+            const table = document.getElementById('monitoringTable');
+            const data = [];
+            
+            // 添加患者信息
+            data.push(['术中体温监测记录单']);
+            data.push([]);
+            
+            for (const [key, value] of Object.entries(patientInfo)) {
+                data.push([key, value]);
+            }
+            
+            data.push([]);
+            
+            // 添加表头
+            const headers = [];
+            const headerRow = table.rows[0];
+            for (let i = 0; i < headerRow.cells.length - 1; i++) {
+                headers.push(headerRow.cells[i].textContent);
+            }
+            data.push(headers);
+            
+            // 添加表格数据
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const rowData = [];
+                
+                for (let j = 0; j < row.cells.length - 1; j++) {
+                    const cell = row.cells[j];
+                    const input = cell.querySelector('input, select');
+                    rowData.push(input ? input.value : '');
+                }
+                
+                data.push(rowData);
+            }
+            
+            // 创建工作簿和工作表
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '术中体温监测记录');
+            
+            // 生成Excel文件并下载
+            const fileName = `术中体温监测记录_${patientInfo['患者姓名'] || '未知'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+        }
+        
+        // 导出为Word
+        function exportToWord() {
+            // 获取患者信息
+            const patientInfo = {
+                '病历号': document.getElementById('patientId').value,
+                '患者姓名': document.getElementById('patientName').value,
+                '性别': document.getElementById('patientGender').value,
+                '年龄': document.getElementById('patientAge').value,
+                '手术日期': document.getElementById('surgeryDate').value,
+                '手术名称': document.getElementById('surgeryName').value,
+                '科室': document.getElementById('department').value,
+                '手术医师': document.getElementById('surgeon').value,
+                '麻醉医师': document.getElementById('anesthesiologist').value
+            };
+            
+            // 创建HTML内容
+            let content = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word' 
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>术中体温监测记录单</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        h1 { text-align: center; }
+                        .patient-info { margin-bottom: 20px; }
+                        .patient-info table { width: 100%; border-collapse: collapse; }
+                        .patient-info td { padding: 5px; border: 1px solid #ddd; }
+                        .monitoring-table { width: 100%; border-collapse: collapse; }
+                        .monitoring-table th, .monitoring-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                        .monitoring-table th { background-color: #f2f2f2; }
+                    </style>
+                </head>
+                <body>
+                    <h1>术中体温监测记录单</h1>
+                    
+                    <div class="patient-info">
+                        <table>
+            `;
+            
+            // 添加患者信息表格
+            let patientInfoHTML = '';
+            let count = 0;
+            for (const [key, value] of Object.entries(patientInfo)) {
+                if (count % 3 === 0) patientInfoHTML += '<tr>';
+                patientInfoHTML += `<td><strong>${key}:</strong> ${value}</td>`;
+                count++;
+                if (count % 3 === 0) patientInfoHTML += '</tr>';
+            }
+            if (count % 3 !== 0) patientInfoHTML += '</tr>';
+            
+            content += patientInfoHTML;
+            content += `
+                        </table>
+                    </div>
+                    
+                    <table class="monitoring-table">
+                        <thead>
+                            <tr>
+            `;
+            
+            // 添加表头
+            const table = document.getElementById('monitoringTable');
+            const headerRow = table.rows[0];
+            for (let i = 0; i < headerRow.cells.length - 1; i++) {
+                content += `<th>${headerRow.cells[i].textContent}</th>`;
+            }
+            
+            content += `
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            // 添加表格数据
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                content += '<tr>';
+                
+                for (let j = 0; j < row.cells.length - 1; j++) {
+                    const cell = row.cells[j];
+                    const input = cell.querySelector('input, select');
+                    content += `<td>${input ? input.value : ''}</td>`;
+                }
+                
+                content += '</tr>';
+            }
+            
+            content += `
+                        </tbody>
+                    </table>
+                </body>
+                </html>
+            `;
+            
+            // 创建Blob并下载
+            const blob = new Blob([content], {type: 'application/msword'});
+            const fileName = `术中体温监测记录_${patientInfo['患者姓名'] || '未知'}_${new Date().toISOString().slice(0, 10)}.doc`;
+            saveAs(blob, fileName);
+        }
+    </script>
+</body>
+</html>
