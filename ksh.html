@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>患者风险评估与决策支持工具</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --low-risk: #2ecc71;
+            --medium-risk: #f39c12;
+            --high-risk: #e74c3c;
+            --critical: #9b59b6;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        
+        .flow-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px;
+        }
+        
+        .details-section {
+            flex: 1;
+            min-width: 300px;
+            padding: 15px;
+            border-left: 1px solid #eee;
+        }
+        
+        .section-title {
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .flowchart {
+            position: relative;
+            margin-top: 20px;
+        }
+        
+        .node {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .node:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        
+        .start {
+            background: var(--secondary);
+        }
+        
+        .low {
+            background: var(--low-risk);
+        }
+        
+        .medium {
+            background: var(--medium-risk);
+        }
+        
+        .high {
+            background: var(--high-risk);
+        }
+        
+        .critical {
+            background: var(--critical);
+        }
+        
+        .connector {
+            height: 30px;
+            width: 2px;
+            background: var(--secondary);
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .connector:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+            transform: rotate(45deg);
+        }
+        
+        .risk-details {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .risk-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .risk-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .recommendation {
+            margin-top: 15px;
+        }
+        
+        .recommendation h4 {
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+        
+        ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        li {
+            padding: 5px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        li:before {
+            content: "•";
+            color: var(--secondary);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-download {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-pdf {
+            background: var(--high-risk);
+            color: white;
+        }
+        
+        .btn-word {
+            background: #2b579a;
+            color: white;
+        }
+        
+        .btn-excel {
+            background: #217346;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: var(--light);
+            color: var(--dark);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .details-section {
+                border-left: none;
+                border-top: 1px solid #eee;
+                margin-top: 20px;
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>患者风险评估流程图</h1>
+            <p class="subtitle">快速判断患者风险等级并提供检测与干预建议</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="flow-section">
+                <h2 class="section-title">风险可视化流程图</h2>
+                <div class="flowchart">
+                    <div class="node start">开始评估</div>
+                    <div class="connector"></div>
+                    <div class="node low" onclick="showDetails('low')">低风险患者</div>
+                    <div class="connector"></div>
+                    <div class="node medium" onclick="showDetails('medium')">中度风险患者</div>
+                    <div class="connector"></div>
+                    <div class="node high" onclick="showDetails('high')">高风险患者</div>
+                    <div class="connector"></div>
+                    <div class="node critical" onclick="showDetails('critical')">危重患者</div>
+                </div>
+            </div>
+            
+            <div class="details-section">
+                <h2 class="section-title">风险详情与建议</h2>
+                <div class="risk-details">
+                    <h3 class="risk-title"><span class="risk-icon" id="risk-icon"></span><span id="risk-level">请选择风险等级</span></h3>
+                    <p id="risk-description">点击流程图中的风险等级查看详细信息和建议</p>
+                    
+                    <div class="recommendation">
+                        <h4>推荐检测</h4>
+                        <ul id="tests-list">
+                            <li>请选择风险等级以查看推荐检测</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="recommendation">
+                        <h4>干预建议</h4>
+                        <ul id="interventions-list">
+                            <li>请选择风险等级以查看干预建议</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn btn-download" onclick="downloadPDF()">下载PDF流程图</button>
+            <button class="btn btn-word" onclick="exportToWord()">导出为Word文档</button>
+            <button class="btn btn-excel" onclick="exportToExcel()">导出为Excel表格</button>
+        </div>
+        
+        <footer>
+            <p>© 2023 医疗决策支持工具 | 仅供医疗专业人员使用</p>
+        </footer>
+    </div>
+
+    <script>
+        // 风险数据
+        const riskData = {
+            low: {
+                level: "低风险",
+                color: "#2ecc71",
+                description: "患者状况稳定，生命体征正常，无明显症状或轻微症状。",
+                tests: [
+                    "基础生命体征监测",
+                    "常规血液检查",
+                    "基础影像学检查（如需要）"
+                ],
+                interventions: [
+                    "门诊随访",
+                    "常规药物治疗",
+                    "患者教育及生活方式建议",
+                    "1-2周后复查"
+                ]
+            },
+            medium: {
+                level: "中度风险",
+                color: "#f39c12",
+                description: "患者有明确症状，生命体征略有异常，需要密切关注。",
+                tests: [
+                    "频繁生命体征监测（每4-6小时）",
+                    "完整血液检查与生化指标",
+                    "心电图检查",
+                    "针对性影像学检查"
+                ],
+                interventions: [
+                    "考虑住院观察",
+                    "专科会诊",
+                    "针对性药物治疗",
+                    "密切监测症状变化",
+                    "24-48小时内重新评估"
+                ]
+            },
+            high: {
+                level: "高风险",
+                color: "#e74c3c",
+                description: "患者生命体征明显异常，有显著症状，需要紧急干预。",
+                tests: [
+                    "持续生命体征监测",
+                    "动脉血气分析",
+                    "心脏标志物检查",
+                    "紧急影像学检查（CT、超声等）",
+                    "专科实验室检查"
+                ],
+                interventions: [
+                    "立即住院治疗",
+                    "多专科会诊",
+                    "积极药物治疗",
+                    "准备可能的手术干预",
+                    "ICU评估（如需要）"
+                ]
+            },
+            critical: {
+                level: "危重",
+                color: "#9b59b6",
+                description: "患者生命体征极不稳定，有器官衰竭风险，需要立即抢救。",
+                tests: [
+                    "持续有创血流动力学监测",
+                    "频繁实验室检查（每2-4小时）",
+                    "床旁超声评估",
+                    "紧急专科检查"
+                ],
+                interventions: [
+                    "立即转入ICU",
+                    "高级生命支持",
+                    "多学科抢救团队",
+                    "紧急手术或介入治疗",
+                    "持续生命体征监测与支持"
+                ]
+            }
+        };
+
+        // 显示风险详情
+        function showDetails(riskLevel) {
+            const data = riskData[riskLevel];
+            document.getElementById('risk-level').textContent = data.level + "患者";
+            document.getElementById('risk-icon').style.backgroundColor = data.color;
+            document.getElementById('risk-description').textContent = data.description;
+            
+            // 更新检测列表
+            const testsList = document.getElementById('tests-list');
+            testsList.innerHTML = '';
+            data.tests.forEach(test => {
+                const li = document.createElement('li');
+                li.textContent = test;
+                testsList.appendChild(li);
+            });
+            
+            // 更新干预列表
+            const interventionsList = document.getElementById('interventions-list');
+            interventionsList.innerHTML = '';
+            data.interventions.forEach(intervention => {
+                const li = document.createElement('li');
+                li.textContent = intervention;
+                interventionsList.appendChild(li);
+            });
+        }
+
+        // 下载PDF
+        function downloadPDF() {
+            const element = document.querySelector('.container');
+            const opt = {
+                margin: 10,
+                filename: '患者风险评估流程图.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // 导出为Word文档
+        function exportToWord() {
+            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>患者风险评估报告</title></head><body>";
+            const footer = "</body></html>";
+            const sourceHTML = header + document.getElementById('risk-level').parentNode.parentNode.parentNode.innerHTML + footer;
+            
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            const fileDownload = document.createElement("a");
+            
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = '患者风险评估报告.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        // 导出为Excel表格
+        function exportToExcel() {
+            // 获取当前显示的风险数据
+            const riskLevel = document.getElementById('risk-level').textContent.replace("患者", "");
+            const description = document.getElementById('risk-description').textContent;
+            
+            // 获取检测和建议列表
+            const tests = Array.from(document.getElementById('tests-list').querySelectorAll('li')).map(li => li.textContent);
+            const interventions = Array.from(document.getElementById('interventions-list').querySelectorAll('li')).map(li => li.textContent);
+            
+            // 准备Excel数据
+            const data = [
+                ["患者风险评估报告"],
+                [""],
+                ["风险等级", riskLevel],
+                ["描述", description],
+                [""],
+                ["推荐检测"]
+            ];
+            
+            tests.forEach(test => {
+                data.push(["", test]);
+            });
+            
+            data.push([""]);
+            data.push(["干预建议"]);
+            
+            interventions.forEach(intervention => {
+                data.push(["", intervention]);
+            });
+            
+            // 创建工作簿和工作表
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "风险评估");
+            
+            // 生成Excel文件并下载
+            XLSX.writeFile(wb, "患者风险评估报告.xlsx");
+        }
+    </script>
+</body>
+</html>
