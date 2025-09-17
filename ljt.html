@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>围术期体温管理路径图</title>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs@4.4.0/exceljs.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background-color: #3498db;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+        }
+        .container {
+            padding: 10px 40px;
+            position: relative;
+            background-color: inherit;
+            width: 50%;
+        }
+        .container::after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            right: -13px;
+            background-color: white;
+            border: 4px solid #3498db;
+            top: 15px;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .left {
+            left: 0;
+        }
+        .right {
+            left: 50%;
+        }
+        .left::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            right: 30px;
+            border: medium solid white;
+            border-width: 10px 0 10px 10px;
+            border-color: transparent transparent transparent white;
+        }
+        .right::before {
+            content: " ";
+            height: 0;
+            position: absolute;
+            top: 22px;
+            width: 0;
+            z-index: 1;
+            left: 30px;
+            border: medium solid white;
+            border-width: 10px 10px 10px 0;
+            border-color: transparent white transparent transparent;
+        }
+        .right::after {
+            left: -13px;
+        }
+        .content {
+            padding: 20px;
+            background-color: white;
+            position: relative;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid #3498db;
+        }
+        .phase-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .time-label {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .step-list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .step-list li {
+            margin-bottom: 8px;
+        }
+        .buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .word-btn {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .excel-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        @media screen and (max-width: 600px) {
+            .timeline::after {
+                left: 31px;
+            }
+            .container {
+                width: 100%;
+                padding-left: 70px;
+                padding-right: 25px;
+            }
+            .container::before {
+                left: 60px;
+                border: medium solid white;
+                border-width: 10px 10px 10px 0;
+                border-color: transparent white transparent transparent;
+            }
+            .left::after, .right::after {
+                left: 15px;
+            }
+            .right {
+                left: 0%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>围术期体温管理路径图</h1>
+    
+    <div class="timeline">
+        <!-- 术前准备阶段 -->
+        <div class="container left">
+            <div class="content">
+                <div class="phase-title">术前准备阶段</div>
+                <p><span class="time-label">时间：</span>手术前24小时至麻醉诱导前</p>
+                <ul class="step-list">
+                    <li>评估患者低体温风险因素（年龄、手术类型、合并症等）</li>
+                    <li>测量并记录基线体温</li>
+                    <li>术前患者教育关于体温管理的重要性</li>
+                    <li>准备保温设备（加温毯、液体加温器等）</li>
+                    <li>预热手术室至适宜温度（≥21°C）</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 麻醉诱导阶段 -->
+        <div class="container right">
+            <div class="content">
+                <div class="phase-title">麻醉诱导阶段</div>
+                <p><span class="time-label">时间：</span>麻醉开始后30分钟内</p>
+                <ul class="step-list">
+                    <li>监测核心体温（食道、膀胱或鼻咽温度探头）</li>
+                    <li>使用加温毯覆盖非手术区域</li>
+                    <li>所有静脉输液加温至37°C</li>
+                    <li>使用加温湿化器管理吸入气体</li>
+                    <li>设定体温监测警报（低于36°C报警）</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 术中维持阶段 -->
+        <div class="container left">
+            <div class="content">
+                <div class="phase-title">术中维持阶段</div>
+                <p><span class="time-label">时间：</span>手术主要过程</p>
+                <ul class="step-list">
+                    <li>持续监测核心体温（每15-30分钟记录）</li>
+                    <li>维持加温措施（加温毯、液体加温、气体加湿）</li>
+                    <li>根据手术需要调整加温强度</li>
+                    <li>体腔冲洗液加温至38-40°C</li>
+                    <li>监测并处理术中出血和大量输液</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 手术结束阶段 -->
+        <div class="container right">
+            <div class="content">
+                <div class="phase-title">手术结束阶段</div>
+                <p><span class="time-label">时间：</span>手术缝合至麻醉苏醒前</p>
+                <ul class="step-list">
+                    <li>评估患者体温状况</li>
+                    <li>如体温低于36°C，加强加温措施</li>
+                    <li>记录最低体温值和体温趋势</li>
+                    <li>准备转运过程中的保温措施</li>
+                    <li>与PACU护士交接体温管理情况</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 术后转运阶段 -->
+        <div class="container left">
+            <div class="content">
+                <div class="phase-title">术后转运阶段</div>
+                <p><span class="time-label">时间：</span>手术室至PACU/ICU</p>
+                <ul class="step-list">
+                    <li>使用保温毯覆盖患者</li>
+                    <li>确保转运途中持续加温（如可能）</li>
+                    <li>监测体温 during transport（如设备允许）</li>
+                    <li>尽量减少身体暴露</li>
+                    <li>快速安全转运，减少途中时间</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- PACU阶段 -->
+        <div class="container right">
+            <div class="content">
+                <div class="phase-title">PACU阶段</div>
+                <p><span class="time-label">时间：</span>到达PACU后至离室</p>
+                <ul class="step-list">
+                    <li>立即测量并记录体温</li>
+                    <li>持续使用加温措施直至体温≥36.5°C</li>
+                    <li>每15分钟监测体温直至稳定</li>
+                    <li>提供温暖毯子</li>
+                    <li>评估寒战情况并处理（必要时药物干预）</li>
+                    <li>体温正常稳定2小时后可考虑停止主动加温</li>
+                    <li>记录离室前最终体温</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="buttons">
+        <button class="btn word-btn" onclick="exportToWord()">下载为Word文档</button>
+        <button class="btn excel-btn" onclick="exportToExcel()">下载为Excel表格</button>
+    </div>
+
+    <script>
+        // 导出为Word文档
+        async function exportToWord() {
+            // 创建一个新的DOCX实例
+            const doc = new docx.Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            text: "围术期体温管理路径图",
+                            heading: docx.HeadingLevel.HEADING_1,
+                            alignment: docx.AlignmentType.CENTER,
+                            spacing: { after: 200 }
+                        })
+                    ]
+                }]
+            });
+            
+            // 添加时间轴内容
+            const containers = document.querySelectorAll('.container');
+            containers.forEach(container => {
+                const title = container.querySelector('.phase-title').textContent;
+                const time = container.querySelector('.time-label').parentElement.textContent;
+                const steps = Array.from(container.querySelectorAll('.step-list li')).map(li => li.textContent);
+                
+                // 添加标题
+                doc.addSection({
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            text: title,
+                            heading: docx.HeadingLevel.HEADING_2,
+                            spacing: { after: 100 }
+                        }),
+                        new docx.Paragraph({
+                            text: time,
+                            spacing: { after: 100 }
+                        })
+                    ]
+                });
+                
+                // 添加步骤
+                steps.forEach(step => {
+                    doc.addSection({
+                        properties: {},
+                        children: [
+                            new docx.Paragraph({
+                                text: "• " + step,
+                                bullet: { level: 0 },
+                                spacing: { after: 50 }
+                            })
+                        ]
+                    });
+                });
+                
+                // 添加空行分隔不同阶段
+                doc.addSection({
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            text: "",
+                            spacing: { after: 200 }
+                        })
+                    ]
+                });
+            });
+            
+            // 生成文档
+            const blob = await docx.Packer.toBlob(doc);
+            
+            // 保存文件
+            saveAs(blob, "围术期体温管理路径图.docx");
+        }
+        
+        // 导出为Excel表格
+        async function exportToExcel() {
+            // 创建一个新的工作簿
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('围术期体温管理路径图');
+            
+            // 设置标题行
+            worksheet.columns = [
+                { header: '阶段', key: 'phase', width: 20 },
+                { header: '时间', key: 'time', width: 30 },
+                { header: '关键步骤', key: 'steps', width: 80 }
+            ];
+            
+            // 添加标题
+            worksheet.addRow({
+                phase: '围术期体温管理路径图',
+                time: '',
+                steps: ''
+            });
+            
+            worksheet.mergeCells('A1:C1');
+            worksheet.getCell('A1').font = { bold: true, size: 16 };
+            worksheet.getCell('A1').alignment = { horizontal: 'center' };
+            
+            // 添加内容
+            const containers = document.querySelectorAll('.container');
+            containers.forEach(container => {
+                const title = container.querySelector('.phase-title').textContent;
+                const time = container.querySelector('.time-label').parentElement.textContent;
+                const steps = Array.from(container.querySelectorAll('.step-list li')).map(li => li.textContent).join('\n• ');
+                
+                worksheet.addRow({
+                    phase: title,
+                    time: time,
+                    steps: '• ' + steps
+                });
+            });
+            
+            // 设置样式
+            worksheet.eachRow((row, rowNumber) => {
+                if (rowNumber > 1) {
+                    row.getCell('phase').font = { bold: true };
+                    row.height = 20 * (row.getCell('steps').value.toString().split('\n').length + 1);
+                    row.alignment = { vertical: 'top', wrapText: true };
+                }
+            });
+            
+            // 生成文件
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            
+            // 保存文件
+            saveAs(blob, "围术期体温管理路径图.xlsx");
+        }
+    </script>
+</body>
+</html>
