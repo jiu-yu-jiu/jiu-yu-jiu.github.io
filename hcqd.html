@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主动保温设备操作核查清单</title>
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c6b9e;
+            text-align: center;
+            border-bottom: 2px solid #2c6b9e;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2c6b9e;
+            margin-top: 25px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .checkbox-cell {
+            width: 50px;
+            text-align: center;
+        }
+        .notes {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #2c6b9e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1a4d7e;
+        }
+        .signature-area {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            width: 45%;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 40px;
+            padding-top: 5px;
+        }
+        @media print {
+            button {
+                display: none;
+            }
+            body {
+                background-color: white;
+            }
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>主动保温设备操作核查清单</h1>
+        <p>设备类型：3M™ Bair Hugger™、Ranger™ 等主动保温设备</p>
+        
+        <div class="btn-container">
+            <button onclick="exportToWord()">下载为Word文档</button>
+            <button onclick="exportToExcel()">下载为Excel文档</button>
+        </div>
+        
+        <h2>使用前检查</h2>
+        <table id="preUseChecklist">
+            <tr>
+                <th class="checkbox-cell">完成</th>
+                <th>检查项目</th>
+                <th>说明/标准</th>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>设备外观检查</td>
+                <td>检查设备外壳有无裂缝、损坏或污渍</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>电源线检查</td>
+                <td>检查电源线是否完好，无磨损或断裂</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>电源连接</td>
+                <td>确认电源插座正常工作，设备通电</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>空气过滤器检查</td>
+                <td>检查空气过滤器是否清洁，必要时更换</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>软管连接</td>
+                <td>检查软管是否完好，无裂缝或堵塞</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>保温毯检查</td>
+                <td>确认保温毯清洁无损，连接口完好</td>
+            </tr>
+        </table>
+
+        <h2>开机操作步骤</h2>
+        <table id="operationChecklist">
+            <tr>
+                <th class="checkbox-cell">完成</th>
+                <th>步骤</th>
+                <th>说明/标准</th>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>开机自检</td>
+                <td>打开电源开关，观察设备自检过程是否正常</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>温度设置</td>
+                <td>根据患者需求设置合适温度（通常32-43℃）</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>流量设置</td>
+                <td>根据需要设置合适的气流量（高/低档）</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>连接保温毯</td>
+                <td>正确连接保温毯到设备出风口</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>放置保温毯</td>
+                <td>将保温毯正确覆盖于患者身上，确保无过度压迫</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>温度监测</td>
+                <td>确认设备温度显示与设定值一致</td>
+            </tr>
+        </table>
+
+        <h2>使用中监测</h2>
+        <table id="monitoringChecklist">
+            <tr>
+                <th class="checkbox-cell">完成</th>
+                <th>监测项目</th>
+                <th>说明/标准</th>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>患者体温监测</td>
+                <td>定期监测患者体温，调整设备温度设置</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>设备运行状态</td>
+                <td>观察设备运行是否正常，有无异常噪音</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>软管连接</td>
+                <td>确保软管连接牢固，无脱落</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>保温毯位置</td>
+                <td>确保保温毯位置正确，覆盖适当</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>患者舒适度</td>
+                <td>询问患者感受，避免过热或过冷</td>
+            </tr>
+        </table>
+
+        <h2>使用后操作</h2>
+        <table id="postUseChecklist">
+            <tr>
+                <th class="checkbox-cell">完成</th>
+                <th>步骤</th>
+                <th>说明/标准</th>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>关闭设备</td>
+                <td>正确关闭设备电源</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>断开连接</td>
+                <td>断开软管与设备的连接</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>设备清洁</td>
+                <td>按照规范清洁设备表面</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>保温毯处理</td>
+                <td>按照感染控制规范处理使用过的保温毯</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>设备存放</td>
+                <td>将设备妥善存放于指定位置</td>
+            </tr>
+            <tr>
+                <td class="checkbox-cell"><input type="checkbox"></td>
+                <td>故障报告</td>
+                <td>如发现设备故障，及时报告相关部门</td>
+            </tr>
+        </table>
+
+        <div class="notes">
+            <h3>重要注意事项：</h3>
+            <ul>
+                <li>请勿在易燃麻醉气体环境中使用本设备</li>
+                <li>确保保温毯不会过度压迫患者身体部位</li>
+                <li>定期检查患者皮肤状况，防止烫伤或压伤</li>
+                <li>遵循制造商指南进行清洁和维护</li>
+                <li>如设备出现异常，立即停止使用并联系维修部门</li>
+            </ul>
+        </div>
+
+        <div class="signature-area">
+            <div class="signature-box">
+                <p>操作人员：________________</p>
+                <div class="signature-line"></div>
+                <p>日期：____________________</p>
+            </div>
+            <div class="signature-box">
+                <p>复核人员：________________</p>
+                <div class="signature-line"></div>
+                <p>日期：____________________</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function exportToWord() {
+            // 创建一个简单的Word文档导出
+            const content = document.querySelector('.container').innerHTML;
+            const converted = htmlDocx.asBlob(content, {
+                orientation: 'portrait',
+                margins: { top: 720, right: 720, bottom: 720, left: 720 }
+            });
+            saveAs(converted, '主动保温设备操作核查清单.docx');
+        }
+
+        function exportToExcel() {
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 准备使用前检查数据
+            const preUseData = [
+                ['使用前检查'],
+                ['完成', '检查项目', '说明/标准']
+            ];
+            
+            const preUseTable = document.getElementById('preUseChecklist');
+            for (let i = 1; i < preUseTable.rows.length; i++) {
+                const row = preUseTable.rows[i];
+                const completed = row.cells[0].querySelector('input').checked ? '是' : '否';
+                const item = row.cells[1].textContent;
+                const standard = row.cells[2].textContent;
+                preUseData.push([completed, item, standard]);
+            }
+            
+            // 准备开机操作数据
+            const operationData = [
+                [''],
+                ['开机操作步骤'],
+                ['完成', '步骤', '说明/标准']
+            ];
+            
+            const operationTable = document.getElementById('operationChecklist');
+            for (let i = 1; i < operationTable.rows.length; i++) {
+                const row = operationTable.rows[i];
+                const completed = row.cells[0].querySelector('input').checked ? '是' : '否';
+                const step = row.cells[1].textContent;
+                const standard = row.cells[2].textContent;
+                operationData.push([completed, step, standard]);
+            }
+            
+            // 准备使用中监测数据
+            const monitoringData = [
+                [''],
+                ['使用中监测'],
+                ['完成', '监测项目', '说明/标准']
+            ];
+            
+            const monitoringTable = document.getElementById('monitoringChecklist');
+            for (let i = 1; i < monitoringTable.rows.length; i++) {
+                const row = monitoringTable.rows[i];
+                const completed = row.cells[0].querySelector('input').checked ? '是' : '否';
+                const item = row.cells[1].textContent;
+                const standard = row.cells[2].textContent;
+                monitoringData.push([completed, item, standard]);
+            }
+            
+            // 准备使用后操作数据
+            const postUseData = [
+                [''],
+                ['使用后操作'],
+                ['完成', '步骤', '说明/标准']
+            ];
+            
+            const postUseTable = document.getElementById('postUseChecklist');
+            for (let i = 1; i < postUseTable.rows.length; i++) {
+                const row = postUseTable.rows[i];
+                const completed = row.cells[0].querySelector('input').checked ? '是' : '否';
+                const step = row.cells[1].textContent;
+                const standard = row.cells[2].textContent;
+                postUseData.push([completed, step, standard]);
+            }
+            
+            // 合并所有数据
+            const allData = [
+                ['主动保温设备操作核查清单'],
+                ['设备类型：3M™ Bair Hugger™、Ranger™ 等主动保温设备'],
+                [''],
+                ...preUseData,
+                ...operationData,
+                ...monitoringData,
+                ...postUseData,
+                [''],
+                ['重要注意事项：'],
+                ['请勿在易燃麻醉气体环境中使用本设备'],
+                ['确保保温毯不会过度压迫患者身体部位'],
+                ['定期检查患者皮肤状况，防止烫伤或压伤'],
+                ['遵循制造商指南进行清洁和维护'],
+                ['如设备出现异常，立即停止使用并联系维修部门'],
+                [''],
+                ['操作人员：_________________________    日期：____________________'],
+                ['复核人员：_________________________    日期：____________________']
+            ];
+            
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            
+            // 添加工作表到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, "核查清单");
+            
+            // 导出Excel文件
+            XLSX.writeFile(wb, "主动保温设备操作核查清单.xlsx");
+        }
+    </script>
+</body>
+</html>
